@@ -5,10 +5,26 @@
 #include <string>
 
 using namespace std;
+
+string receberMsg(int clientSocket){
+
+    char buffer[1024];
+
+    int bytesRead = recv(clientSocket,buffer,sizeof(buffer),0);
+    if(bytesRead == -1){
+        cerr << "Erro na espera" << endl;
+    }else{
+        buffer[bytesRead] = '\0';
+        return string(buffer);
+    }
+
+}
+
 int main() {
     //Variaveis
     const int port = 8080;
     char buffer[1024];
+    int opcaoEscolhida = 0;
 
     // Criando server
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -37,7 +53,7 @@ int main() {
         return -1;
     }
 
-    cout << "Espernado..." << endl;
+    cout << "Esperando..." << endl;
 
     // Aceitando a Conexeção
     sockaddr_in clientAddr;
@@ -54,12 +70,30 @@ int main() {
 
     // Lê dados do cliente
     
-    int bytesRead = recv(clientSocket, buffer, sizeof(buffer), 0);
-    if (bytesRead == -1) {
-        std::cerr << "Erro ao receber dados do cliente." << std::endl;
-    } else {
-        std::cout << "Mensagem do cliente: " << buffer << std::endl;
-    }
+        cout << receberMsg(clientSocket) << endl;
+
+        const char* resposta = "Opções:\n1. Listagem de arquivos\n2. Download de arquivo\n3. Deletar arquivo\n4. Upload de arquivos\n";
+        send(clientSocket, resposta, strlen(resposta),0);
+
+        opcaoEscolhida = stoi(receberMsg(clientSocket));
+
+        switch(opcaoEscolhida){
+            case 1:
+            cout << "foi : 1" << endl;
+            break;
+            case 2:
+            cout << "foi : 2" << endl;
+            break;
+            case 3:
+            cout << "foi : 3" << endl;
+            break;
+            case 4:
+            cout << "foi : 4" << endl;
+            break;
+            default:
+            break;
+        }
+
 
     // Fecha os sockets
     close(clientSocket);

@@ -6,10 +6,33 @@
 
 using namespace std;
 
+string receberMsg(int clientSocket){
+
+    char buffer[1024];  
+    int bytesRecebidos = recv(clientSocket, buffer, sizeof(buffer),0);
+    if(bytesRecebidos == -1){
+        cerr << "Erro ao receber dados" << endl;
+    }else{
+        buffer[bytesRecebidos] = '\0';
+        return string(buffer);
+    }
+}
+
+void enviarMsg(int clientSocket, const char* mensagem){
+
+    if (send(clientSocket, mensagem, strlen(mensagem), 0) == -1) {
+        cerr << "Erro ao enviar dados para o servidor." << endl;
+    } else {
+        cout << "Dados enviados para o servidor." << endl;
+    }
+
+}
+
 int main() {
     //Variaveis
     const int port = 8080;
     const string ip = "127.0.0.1";
+    int escolhaOpcao = 0;
 
     // Criação do socket do cliente
     int clientSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -32,13 +55,18 @@ int main() {
     }
 
     // Envio de dados para o servidor
-    const char* message = "Hello Server!";
-    if (send(clientSocket, message, strlen(message), 0) == -1) {
-        cerr << "Erro ao enviar dados para o servidor." << endl;
-    } else {
-        cout << "Dados enviados para o servidor." << endl;
-    }
+    enviarMsg(clientSocket, "Hello teste!");
+    
+    //receber mensagem de volta
+    cout << receberMsg(clientSocket) << endl;
 
+    //Escolher opção
+    cin >> escolhaOpcao;
+
+    string opcaoEscolhida = to_string(escolhaOpcao);
+
+    enviarMsg(clientSocket,opcaoEscolhida.c_str());
+    
     // Fecha o socket do cliente
     close(clientSocket);
 
