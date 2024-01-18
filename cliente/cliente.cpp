@@ -66,6 +66,8 @@ int main() {
     string opcaoEscolhida = to_string(escolhaOpcao);
 
     enviarMsg(clientSocket,opcaoEscolhida.c_str());
+
+    cout << receberMsg(clientSocket) << endl;
     
     // Fecha o socket do cliente
     close(clientSocket);

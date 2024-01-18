@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <string>
+#include <dirent.h>
 
 using namespace std;
 
@@ -19,12 +20,41 @@ string receberMsg(int clientSocket){
     }
 
 }
+string listarArquivos(){
+    string todosArquivos;
+    DIR* caminho = opendir("./arquivos");
+
+    if(caminho){
+        struct dirent* arquivo;
+        while((arquivo = readdir(caminho))!= NULL){
+            if(strcmp(arquivo->d_name, ".") != 0 && strcmp(arquivo->d_name, "..") != 0){
+                todosArquivos = todosArquivos + "\n" + arquivo->d_name;
+            }
+        }
+        closedir(caminho);
+        return todosArquivos;
+    }else{
+        cout << "erro" << endl;
+        return "0";
+    }
+}
+
+void enviarMsg(int clientSocket, const char* mensagem){
+
+    if (send(clientSocket, mensagem, strlen(mensagem), 0) == -1) {
+        cerr << "Erro ao enviar dados para o servidor." << endl;
+    } else {
+        cout << "Dados enviados para o servidor." << endl;
+    }
+
+}
 
 int main() {
     //Variaveis
     const int port = 8080;
     char buffer[1024];
     int opcaoEscolhida = 0;
+    string todosArquivos = "";
 
     // Criando server
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -79,7 +109,8 @@ int main() {
 
         switch(opcaoEscolhida){
             case 1:
-            cout << "foi : 1" << endl;
+            todosArquivos = listarArquivos();
+            enviarMsg(clientSocket, todosArquivos.c_str());
             break;
             case 2:
             cout << "foi : 2" << endl;
