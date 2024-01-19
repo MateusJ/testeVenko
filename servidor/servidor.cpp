@@ -50,12 +50,38 @@ void enviarMsg(int clientSocket, const char* mensagem){
 
 }
 
+void enviarArquivo(int clientSocket, const char* arquivoEscolhido){
+
+    string novoArquivo = "./arquivos/" + string(arquivoEscolhido);
+    cout << novoArquivo << endl;
+
+    ifstream arquivo(novoArquivo, ios::binary | ios::ate);
+
+    if(!arquivo.is_open()){
+        cerr << "Erro ao abrir arquivo" << endl;
+        return;
+    }
+
+    streamsize tamanhoArquivo = arquivo.tellg();
+    arquivo.seekg(0,ios::beg);
+
+    send(clientSocket, &tamanhoArquivo, sizeof(tamanhoArquivo), 0);
+
+    char buffer[1024];
+    while(!arquivo.eof()){
+        arquivo.read(buffer, sizeof(buffer));
+        send(clientSocket,buffer,arquivo.gcount(),0);
+    }
+    arquivo.close();
+
+}
+
 int main() {
     //Variaveis
     const int port = 8080;
     char buffer[1024];
     int opcaoEscolhida = 0;
-    string todosArquivos = "";
+    string todosArquivos = "", arquivoEscolhido = "";
 
     // Criando server
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -105,7 +131,9 @@ int main() {
 
         while(true){
 
-            const char* resposta = "Opções:\n1. Listagem de arquivos\n2. Download de arquivo\n3. Deletar arquivo\n4. Upload de arquivos\n";
+            receberMsg(clientSocket);
+
+            const char* resposta = "Opçõs:\n1. Listagem de arquivos\n2. Download de arquivo\n3. Deletar arquivo\n4. Upload de arquivos\n";
             send(clientSocket, resposta, strlen(resposta),0);
             
 
@@ -118,6 +146,10 @@ int main() {
                 break;
                 case 2:
                 enviarMsg(clientSocket, "Deseja fazer download de qual arquivo?");
+                arquivoEscolhido = receberMsg(clientSocket);
+                cout <<  arquivoEscolhido<< endl;
+                enviarArquivo(clientSocket, arquivoEscolhido.c_str());
+                
                 break;
                 case 3:
                 cout << "foi : 3" << endl;
@@ -131,6 +163,8 @@ int main() {
 
         }
         endwhile:;
+
+        
     // Fecha os sockets
     close(clientSocket);
     close(serverSocket);
