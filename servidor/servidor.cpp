@@ -4,6 +4,7 @@
 #include <arpa/inet.h>
 #include <string>
 #include <dirent.h>
+#include <fstream>
 
 using namespace std;
 
@@ -102,30 +103,34 @@ int main() {
     
         cout << receberMsg(clientSocket) << endl;
 
-        const char* resposta = "Opções:\n1. Listagem de arquivos\n2. Download de arquivo\n3. Deletar arquivo\n4. Upload de arquivos\n";
-        send(clientSocket, resposta, strlen(resposta),0);
+        while(true){
 
-        opcaoEscolhida = stoi(receberMsg(clientSocket));
+            const char* resposta = "Opções:\n1. Listagem de arquivos\n2. Download de arquivo\n3. Deletar arquivo\n4. Upload de arquivos\n";
+            send(clientSocket, resposta, strlen(resposta),0);
+            
 
-        switch(opcaoEscolhida){
-            case 1:
-            todosArquivos = listarArquivos();
-            enviarMsg(clientSocket, todosArquivos.c_str());
-            break;
-            case 2:
-            cout << "foi : 2" << endl;
-            break;
-            case 3:
-            cout << "foi : 3" << endl;
-            break;
-            case 4:
-            cout << "foi : 4" << endl;
-            break;
-            default:
-            break;
+            opcaoEscolhida = stoi(receberMsg(clientSocket));
+
+            switch(opcaoEscolhida){
+                case 1:
+                todosArquivos = listarArquivos();
+                enviarMsg(clientSocket, todosArquivos.c_str());
+                break;
+                case 2:
+                enviarMsg(clientSocket, "Deseja fazer download de qual arquivo?");
+                break;
+                case 3:
+                cout << "foi : 3" << endl;
+                break;
+                case 4:
+                cout << "foi : 4" << endl;
+                break;
+                default:
+                goto endwhile;
+            }
+
         }
-
-
+        endwhile:;
     // Fecha os sockets
     close(clientSocket);
     close(serverSocket);

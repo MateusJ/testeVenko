@@ -60,14 +60,24 @@ int main() {
     //receber mensagem de volta
     cout << receberMsg(clientSocket) << endl;
 
-    //Escolher opção
-    cin >> escolhaOpcao;
+    while(true){
 
-    string opcaoEscolhida = to_string(escolhaOpcao);
+        //Escolher opção
+        cin >> escolhaOpcao;
+    
+        string opcaoEscolhida = to_string(escolhaOpcao);
+    
+        enviarMsg(clientSocket,opcaoEscolhida.c_str());
+    
+        cout << receberMsg(clientSocket) << endl;
 
-    enviarMsg(clientSocket,opcaoEscolhida.c_str());
+        if(escolhaOpcao < 1 || escolhaOpcao > 4){
+            goto endwhile;
+        }
+    }
+    endwhile:;
 
-    cout << receberMsg(clientSocket) << endl;
+
     
     // Fecha o socket do cliente
     close(clientSocket);
