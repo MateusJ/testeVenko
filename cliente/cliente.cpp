@@ -54,6 +54,36 @@ void receberArquivo(int clientSocket, const char* novoArquivo){
 
 }
 
+void enviarArquivo(int clientSocket, const char* arquivoEscolhido){
+
+    string uploadArquivo = "./uploads/" + string(arquivoEscolhido);
+    
+    ifstream arquivo(uploadArquivo, ios::binary | ios::ate);
+
+    if(!arquivo.is_open()){
+        cerr << "Erro ao abrir arquivo" << endl;
+        return;
+    }
+
+    enviarMsg(clientSocket, arquivoEscolhido);
+    receberMsg(clientSocket);
+    
+    streamsize tamanhoArquivo = arquivo.tellg();
+    arquivo.seekg(0,ios::beg);
+    
+
+    send(clientSocket, &tamanhoArquivo, sizeof(tamanhoArquivo),0);
+    receberMsg(clientSocket);
+
+    char buffer[1024];
+    while(!arquivo.eof()){
+        arquivo.read(buffer, sizeof(buffer));
+        send(clientSocket,buffer,arquivo.gcount(),0);
+    }
+    arquivo.close();
+
+}
+
 int main() {
     const int port = 8080;
     const string ip = "127.0.0.1";
@@ -102,6 +132,16 @@ int main() {
 
                 receberArquivo(clientSocket, "novoArquivo");
                 break;
+            case 3:
+                cout << receberMsg(clientSocket) << endl;
+                cin >> escolherAuxiliar;
+                enviarMsg(clientSocket, escolherAuxiliar.c_str());
+            break;
+            case 4:
+                cout << receberMsg(clientSocket) << endl;
+                cin >> escolherAuxiliar;
+                enviarArquivo(clientSocket, escolherAuxiliar.c_str());
+            break;
             default:
                 close(clientSocket);
                 return 0;

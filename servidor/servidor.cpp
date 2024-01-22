@@ -5,6 +5,7 @@
 #include <string>
 #include <dirent.h>
 #include <fstream>
+#include <cstdio>
 
 using namespace std;
 
@@ -74,6 +75,58 @@ void enviarArquivo(int clientSocket, const char* arquivoEscolhido){
     }
     arquivo.close();
 
+}
+
+void deleteArquivo(const char* arquivoEscolhido){
+
+    cout << arquivoEscolhido << endl;
+
+    string deletarArquivo = "./arquivos/" + string(arquivoEscolhido);
+
+    cout << deletarArquivo << endl;
+
+    if(remove(deletarArquivo.c_str()) != 0){
+        cerr << "Problemas ao remover arquivo" << endl;
+    }else{
+        cout << "Removido com sucesso" << endl;
+    }
+
+}
+
+void receberArquivo(int clientSocket){
+
+    string novoArquivo = receberMsg(clientSocket);
+    cout <<  novoArquivo << endl;
+    enviarMsg(clientSocket, "OK");
+    
+    ofstream arquivo(novoArquivo, ios::binary);
+
+    if(!arquivo.is_open()){
+        cerr << "Erro ao criar arquivo" << endl;
+        return;
+    }
+
+    
+
+    streamsize tamanhoArquivo;
+    recv(clientSocket, &tamanhoArquivo, sizeof(tamanhoArquivo),0);
+    cout << "tamanho arquivo" << tamanhoArquivo << endl;
+    enviarMsg(clientSocket, "OK");
+
+    char buffer[1024];
+    streamsize bytes = 0;
+    while(bytes < tamanhoArquivo){
+        int recebido = recv(clientSocket, buffer, sizeof(buffer),0);
+        if(recebido == -1){
+            cerr << "Erro ao receber arquivo" << endl;
+            break;
+        }
+
+        arquivo.write(buffer,recebido);
+        bytes += recebido;
+    }
+    arquivo.close();
+    
 }
 
 int main() {
@@ -152,10 +205,14 @@ int main() {
                 
                 break;
                 case 3:
-                cout << "foi : 3" << endl;
+                enviarMsg(clientSocket, "Qual arquivo deseja deletar?");
+                arquivoEscolhido = receberMsg(clientSocket);
+                cout << arquivoEscolhido << endl;
+                deleteArquivo(arquivoEscolhido.c_str());
                 break;
                 case 4:
-                cout << "foi : 4" << endl;
+                enviarMsg(clientSocket, "Escolha um arquivo para fazer upload:");
+                receberArquivo(clientSocket);
                 break;
                 default:
                 goto endwhile;
