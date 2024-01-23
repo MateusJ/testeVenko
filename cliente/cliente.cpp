@@ -9,12 +9,13 @@ using namespace std;
 
 struct Arquivo{
     char nome[50];
-    streamsize tamanho;
+    
 };
 
-struct pedido{
+struct Pedido{
     char nome[50];
-    char funcao[15];
+    int funcao;
+    streamsize tamanho;
 };
 
 string receberMsg(int clientSocket) {
@@ -36,11 +37,21 @@ void enviarMsg(int clientSocket, const char* mensagem) {
     }
 }
 
+void enviarPedido(int clientSocket, Pedido pedido){
+
+    if (send(clientSocket, &pedido, sizeof(Pedido), 0) == -1) {
+        cerr << "Erro ao enviar dados para o servidor." << endl;
+    } else {
+        cout << "Dados enviados para o servidor." << endl;
+    }
+
+}
+
 void receberArquivo(int clientSocket){
 
-    Arquivo download;
+    Pedido download;
 
-    recv(clientSocket, &download, sizeof(Arquivo),0);
+    recv(clientSocket, &download, sizeof(Pedido),0);
     cout << download.nome << endl;
     cout << download.tamanho << endl;
     enviarMsg(clientSocket, "OK");
@@ -70,9 +81,9 @@ void receberArquivo(int clientSocket){
 
 }
 
-void enviarArquivo(int clientSocket, const char* arquivoEscolhido){
+void enviarArquivo(int clientSocket, Pedido pedido){
 
-    string uploadArquivo = "./uploads/" + string(arquivoEscolhido);
+    string uploadArquivo = "./uploads/" + string(pedido.nome);
     
     ifstream arquivo(uploadArquivo, ios::binary | ios::ate);
 
@@ -80,15 +91,13 @@ void enviarArquivo(int clientSocket, const char* arquivoEscolhido){
         cerr << "Erro ao abrir arquivo" << endl;
         return;
     }
-
-    enviarMsg(clientSocket, arquivoEscolhido);
-    receberMsg(clientSocket);
     
     streamsize tamanhoArquivo = arquivo.tellg();
     arquivo.seekg(0,ios::beg);
     
+    pedido.tamanho = tamanhoArquivo;
 
-    send(clientSocket, &tamanhoArquivo, sizeof(tamanhoArquivo),0);
+    send(clientSocket, &pedido, sizeof(Pedido),0);
     receberMsg(clientSocket);
 
     char buffer[1024];
@@ -129,35 +138,41 @@ int main() {
 
         enviarMsg(clientSocket, "ok");
 
+        Pedido pedido;
+
         cout << "Opções:\n1. Listagem de arquivos\n2. Download de arquivo\n3. Deletar arquivo\n4. Upload de arquivos\n" << endl;
         cout << "Escolha uma opção: ";
         cin >> escolhaOpcao;
-
-        string opcaoEscolhida = to_string(escolhaOpcao);
-        enviarMsg(clientSocket, opcaoEscolhida.c_str());
+        pedido.funcao = escolhaOpcao;
 
         switch (escolhaOpcao) {
             case 1:
+                enviarPedido(clientSocket, pedido);
                 cout << receberMsg(clientSocket) << endl;
                 break;
             case 2:
                 cout << "Deseja fazer download de qual arquivo? ";
                 cin >> escolherAuxiliar;
-                enviarMsg(clientSocket, escolherAuxiliar.c_str());
+                strcpy(pedido.nome, escolherAuxiliar.c_str());
+                enviarPedido(clientSocket, pedido);
 
                 receberArquivo(clientSocket);
                 break;
             case 3:
-                cout << receberMsg(clientSocket) << endl;
+                cout << "Qual arquivo deseja deletar?" << endl;
                 cin >> escolherAuxiliar;
-                enviarMsg(clientSocket, escolherAuxiliar.c_str());
+                strcpy(pedido.nome, escolherAuxiliar.c_str());
+                enviarPedido(clientSocket, pedido);
             break;
             case 4:
-                cout << receberMsg(clientSocket) << endl;
+                cout << "Escolha um arquivo para fazer upload:" << endl;
                 cin >> escolherAuxiliar;
-                enviarArquivo(clientSocket, escolherAuxiliar.c_str());
+                strcpy(pedido.nome, escolherAuxiliar.c_str());
+                enviarPedido(clientSocket, pedido);
+                enviarArquivo(clientSocket, pedido);
             break;
             default:
+
                 close(clientSocket);
                 return 0;
         }

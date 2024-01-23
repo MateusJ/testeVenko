@@ -11,12 +11,13 @@ using namespace std;
 
 struct Arquivo{
     char nome[50];
-    streamsize tamanho;
+    
 };
 
 struct Pedido{
     char nome[50];
-    char funcao[15];
+    int funcao;
+    streamsize tamanho;
 };
 
 string receberMsg(int clientSocket){
@@ -29,6 +30,19 @@ string receberMsg(int clientSocket){
     }else{
         buffer[bytesRead] = '\0';
         return string(buffer);
+    }
+
+}
+
+Pedido receberPedido(int clientSocket){
+
+    Pedido pedido;
+
+    int bytesRead = recv(clientSocket,&pedido,sizeof(Pedido),0);
+    if(bytesRead == -1){
+        cerr << "Erro na espera" << endl;
+    }else{
+        return pedido;
     }
 
 }
@@ -63,7 +77,7 @@ void enviarMsg(int clientSocket, const char* mensagem){
 
 void enviarArquivo(int clientSocket, const char* arquivoEscolhido){
 
-    Arquivo download;
+    Pedido download;
 
     string novoArquivo = "./arquivos/" + string(arquivoEscolhido);
     cout << novoArquivo << endl;
@@ -84,7 +98,7 @@ void enviarArquivo(int clientSocket, const char* arquivoEscolhido){
     cout << download.nome << endl;
     cout << download.tamanho << endl;
 
-    send(clientSocket, &download, sizeof(Arquivo),0);
+    send(clientSocket, &download, sizeof(Pedido),0);
 
     receberMsg(clientSocket);
 
@@ -115,11 +129,12 @@ void deleteArquivo(const char* arquivoEscolhido){
 
 void receberArquivo(int clientSocket){
 
-    string novoArquivo = receberMsg(clientSocket);
-    cout <<  novoArquivo << endl;
+    Pedido upload;
+
+    recv(clientSocket, &upload, sizeof(Pedido), 0);
     enviarMsg(clientSocket, "OK");
 
-    string caminho = "./arquivos/" + string(novoArquivo);
+    string caminho = "./arquivos/" + string(upload.nome);
     
     ofstream arquivo(caminho.c_str(), ios::binary);
 
@@ -128,16 +143,9 @@ void receberArquivo(int clientSocket){
         return;
     }
 
-    
-
-    streamsize tamanhoArquivo;
-    recv(clientSocket, &tamanhoArquivo, sizeof(tamanhoArquivo),0);
-    cout << "tamanho arquivo" << tamanhoArquivo << endl;
-    enviarMsg(clientSocket, "OK");
-
     char buffer[1024];
     streamsize bytes = 0;
-    while(bytes < tamanhoArquivo){
+    while(bytes < upload.tamanho){
         int recebido = recv(clientSocket, buffer, sizeof(buffer),0);
         if(recebido == -1){
             cerr << "Erro ao receber arquivo" << endl;
@@ -206,31 +214,31 @@ int main() {
 
         while(true){
 
+            Pedido pedido;
             receberMsg(clientSocket);            
 
-            opcaoEscolhida = stoi(receberMsg(clientSocket));
+            pedido = receberPedido(clientSocket);
+            
+            cout << pedido.funcao << endl;
+            cout << pedido.nome << endl;
 
-            switch(opcaoEscolhida){
+            switch(pedido.funcao){
                 case 1:
                 todosArquivos = listarArquivos();
                 enviarMsg(clientSocket, todosArquivos.c_str());
                 break;
                 case 2:
-                arquivoEscolhido = receberMsg(clientSocket);
-                enviarArquivo(clientSocket, arquivoEscolhido.c_str());
-                
+                enviarArquivo(clientSocket, pedido.nome);
                 break;
                 case 3:
-                enviarMsg(clientSocket, "Qual arquivo deseja deletar?");
-                arquivoEscolhido = receberMsg(clientSocket);
-                cout << arquivoEscolhido << endl;
-                deleteArquivo(arquivoEscolhido.c_str());
+                cout << pedido.nome << endl;
+                deleteArquivo(pedido.nome);
                 break;
                 case 4:
-                enviarMsg(clientSocket, "Escolha um arquivo para fazer upload:");
                 receberArquivo(clientSocket);
                 break;
                 default:
+                cout << "Até mais" << endl;
                 goto endwhile;
             }
 
