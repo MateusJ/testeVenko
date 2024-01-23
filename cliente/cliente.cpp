@@ -7,6 +7,16 @@
 
 using namespace std;
 
+struct Arquivo{
+    char nome[50];
+    streamsize tamanho;
+};
+
+struct pedido{
+    char nome[50];
+    char funcao[15];
+};
+
 string receberMsg(int clientSocket) {
     char buffer[1024];
     int bytesRecebidos = recv(clientSocket, buffer, sizeof(buffer), 0);
@@ -26,21 +36,27 @@ void enviarMsg(int clientSocket, const char* mensagem) {
     }
 }
 
-void receberArquivo(int clientSocket, const char* novoArquivo){
+void receberArquivo(int clientSocket){
 
-    ofstream arquivo(novoArquivo, ios::binary);
+    Arquivo download;
+
+    recv(clientSocket, &download, sizeof(Arquivo),0);
+    cout << download.nome << endl;
+    cout << download.tamanho << endl;
+    enviarMsg(clientSocket, "OK");
+
+    string caminho = "./downloads/" + string(download.nome);
+
+    ofstream arquivo(caminho, ios::binary);
 
     if(!arquivo.is_open()){
         cerr << "Erro ao criar arquivo" << endl;
         return;
     }
 
-    streamsize tamanhoArquivo;
-    recv(clientSocket, &tamanhoArquivo, sizeof(tamanhoArquivo), 0);
-
     char buffer[1024];
     streamsize bytes = 0;
-    while(bytes < tamanhoArquivo){
+    while(bytes < download.tamanho){
         int recebido = recv(clientSocket, buffer, sizeof(buffer),0);
         if(recebido == -1){
             cerr << "Erro ao receber arquivo" << endl;
@@ -113,7 +129,7 @@ int main() {
 
         enviarMsg(clientSocket, "ok");
 
-        cout << receberMsg(clientSocket) << endl;
+        cout << "Opções:\n1. Listagem de arquivos\n2. Download de arquivo\n3. Deletar arquivo\n4. Upload de arquivos\n" << endl;
         cout << "Escolha uma opção: ";
         cin >> escolhaOpcao;
 
@@ -125,12 +141,11 @@ int main() {
                 cout << receberMsg(clientSocket) << endl;
                 break;
             case 2:
-                cout << receberMsg(clientSocket) << endl;
-                cout << "Escolha um arquivo (número): ";
+                cout << "Deseja fazer download de qual arquivo? ";
                 cin >> escolherAuxiliar;
                 enviarMsg(clientSocket, escolherAuxiliar.c_str());
 
-                receberArquivo(clientSocket, "novoArquivo");
+                receberArquivo(clientSocket);
                 break;
             case 3:
                 cout << receberMsg(clientSocket) << endl;

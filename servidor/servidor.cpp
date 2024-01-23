@@ -9,6 +9,16 @@
 
 using namespace std;
 
+struct Arquivo{
+    char nome[50];
+    streamsize tamanho;
+};
+
+struct Pedido{
+    char nome[50];
+    char funcao[15];
+};
+
 string receberMsg(int clientSocket){
 
     char buffer[1024];
@@ -53,6 +63,8 @@ void enviarMsg(int clientSocket, const char* mensagem){
 
 void enviarArquivo(int clientSocket, const char* arquivoEscolhido){
 
+    Arquivo download;
+
     string novoArquivo = "./arquivos/" + string(arquivoEscolhido);
     cout << novoArquivo << endl;
 
@@ -66,12 +78,20 @@ void enviarArquivo(int clientSocket, const char* arquivoEscolhido){
     streamsize tamanhoArquivo = arquivo.tellg();
     arquivo.seekg(0,ios::beg);
 
-    send(clientSocket, &tamanhoArquivo, sizeof(tamanhoArquivo), 0);
+    strcpy(download.nome, arquivoEscolhido);
+    download.tamanho = tamanhoArquivo;
 
-    char buffer[1024];
+    cout << download.nome << endl;
+    cout << download.tamanho << endl;
+
+    send(clientSocket, &download, sizeof(Arquivo),0);
+
+    receberMsg(clientSocket);
+
+    char bufferArquivo[1024];
     while(!arquivo.eof()){
-        arquivo.read(buffer, sizeof(buffer));
-        send(clientSocket,buffer,arquivo.gcount(),0);
+        arquivo.read(bufferArquivo, sizeof(bufferArquivo));
+        send(clientSocket,bufferArquivo,arquivo.gcount(),0);
     }
     arquivo.close();
 
@@ -98,8 +118,10 @@ void receberArquivo(int clientSocket){
     string novoArquivo = receberMsg(clientSocket);
     cout <<  novoArquivo << endl;
     enviarMsg(clientSocket, "OK");
+
+    string caminho = "./arquivos/" + string(novoArquivo);
     
-    ofstream arquivo(novoArquivo, ios::binary);
+    ofstream arquivo(caminho.c_str(), ios::binary);
 
     if(!arquivo.is_open()){
         cerr << "Erro ao criar arquivo" << endl;
@@ -184,11 +206,7 @@ int main() {
 
         while(true){
 
-            receberMsg(clientSocket);
-
-            const char* resposta = "Opçõs:\n1. Listagem de arquivos\n2. Download de arquivo\n3. Deletar arquivo\n4. Upload de arquivos\n";
-            send(clientSocket, resposta, strlen(resposta),0);
-            
+            receberMsg(clientSocket);            
 
             opcaoEscolhida = stoi(receberMsg(clientSocket));
 
@@ -198,9 +216,7 @@ int main() {
                 enviarMsg(clientSocket, todosArquivos.c_str());
                 break;
                 case 2:
-                enviarMsg(clientSocket, "Deseja fazer download de qual arquivo?");
                 arquivoEscolhido = receberMsg(clientSocket);
-                cout <<  arquivoEscolhido<< endl;
                 enviarArquivo(clientSocket, arquivoEscolhido.c_str());
                 
                 break;
