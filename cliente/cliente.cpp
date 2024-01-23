@@ -172,7 +172,7 @@ int main() {
                 enviarArquivo(clientSocket, pedido);
             break;
             default:
-
+                enviarPedido(clientSocket, pedido);
                 close(clientSocket);
                 return 0;
         }
