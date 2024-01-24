@@ -1,11 +1,11 @@
 #include <iostream>
-#include <cstring>
-#include <unistd.h>
+#include <cstring> // manipulação de caracteres
+#include <unistd.h> // Chamada de sistema (close)
 #include <arpa/inet.h>
 #include <string>
-#include <dirent.h>
+#include <dirent.h> //leitura de diretorios
 #include <fstream>
-#include <cstdio>
+#include <cstdio> //Varias funções, utilizado para remover arquivo.
 
 using namespace std;
 
@@ -23,7 +23,7 @@ string receberMsg(int clientSocket){
     if(bytesRead == -1){
         cerr << "Erro na espera" << endl;
     }else{
-        buffer[bytesRead] = '\0';
+        buffer[bytesRead] = '\0'; //isso foi feito para evitar que caracteres indesejaveis apareçam
         return string(buffer);
     }
 
@@ -83,10 +83,10 @@ void enviarArquivo(int clientSocket, const char* arquivoEscolhido){
         return;
     }
 
-    streamsize tamanhoArquivo = arquivo.tellg();
-    arquivo.seekg(0,ios::beg);
+    streamsize tamanhoArquivo = arquivo.tellg(); //Para verificar o tamanho do arquivo
+    arquivo.seekg(0,ios::beg); // para pocisionar o ponteiro de leitura no inicio do arquivo
 
-    strcpy(download.nome, arquivoEscolhido);
+    strcpy(download.nome, arquivoEscolhido); //copiar o valor de uma variavel para outra.
     download.tamanho = tamanhoArquivo;
 
     send(clientSocket, &download, sizeof(Pedido),0);
@@ -149,6 +149,30 @@ void receberArquivo(int clientSocket){
     
 }
 
+void escreverLog(string mensagem){
+
+    ofstream log("log.txt", ios::app);
+
+    if(!log.is_open()){
+        cerr << "Erro ao criar arquivo" << endl;
+        return;
+    }
+
+    int bytes;
+
+    log << mensagem;
+
+}
+
+void checarLog(){
+
+    FILE *log;
+    if(log = fopen("log.txt", "r")){
+        remove("log.txt");
+    }
+
+}
+
 int main() {
     //Variaveis
     const int port = 8080;
@@ -156,11 +180,16 @@ int main() {
     int opcaoEscolhida = 0;
     string todosArquivos = "", arquivoEscolhido = "";
 
+    //Checa se o arquivo log ja existe e apaga se existir
+    checarLog();
+
     // Criando server
-    int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+    int serverSocket = socket(AF_INET, SOCK_STREAM, 0); //SOCK_STREAM = TCP
     if (serverSocket == -1) {
-        cerr << "Erro na criação do servidor" << endl;
+        escreverLog("Erro ao criar servidor\n");
         return -1;
+    }else{
+        escreverLog("Servidor Criado com sucesso\n");
     }
 
     // Configuração do servidor
@@ -171,16 +200,20 @@ int main() {
 
     // Vinculação porta e socket
     if (bind(serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == -1) {
-        cerr << "Erro na vinculação do socket." << endl;
+        escreverLog("Erro na vinculação do Socket\n");
         close(serverSocket);
         return -1;
+    }else{
+        escreverLog("Socket vinculado com sucesso\n");
     }
 
     // Servidor em modo Listen
     if (listen(serverSocket, 10) == -1) {
-        cerr << "Erro ao colocar o servidor em modo listen." << endl;
+        escreverLog("Erro ao colocar servidor em modo listen\n");
         close(serverSocket);
         return -1;
+    }else{
+        escreverLog("Servidor em modo listen\n");
     }
 
     cout << "Esperando..." << endl;
@@ -191,41 +224,42 @@ int main() {
     int clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddr, &clientAddrLen);
 
     if (clientSocket == -1) {
-        std::cerr << "Erro ao aceitar a conexão." << std::endl;
+        escreverLog("Erro na conexão/n");
         close(serverSocket);
         return -1;
     }
 
-    cout << "Cliente conectado." << endl;
+    escreverLog("Cliente Conectado\n");
+    cout << "Cliente Conectado\n" << endl;
 
-    // Lê dados do cliente
-    
-        
 
         while(true){
 
             Pedido pedido;
-            cout << receberMsg(clientSocket) << endl;
+
+            //Checa se o cliente e o servidor estão na mesma etapa.
+            receberMsg(clientSocket);
             enviarMsg(clientSocket, "OK");            
 
+            //Recebe o pedido
             pedido = receberPedido(clientSocket);
 
             switch(pedido.funcao){
                 case 1:
-                todosArquivos = listarArquivos();
-                enviarMsg(clientSocket, todosArquivos.c_str());
+                    todosArquivos = listarArquivos();
+                    enviarMsg(clientSocket, todosArquivos.c_str());
                 break;
                 case 2:
-                enviarArquivo(clientSocket, pedido.nome);
+                    enviarArquivo(clientSocket, pedido.nome);
                 break;
                 case 3:
-                deleteArquivo(pedido.nome);
+                    deleteArquivo(pedido.nome);
                 break;
                 case 4:
-                receberArquivo(clientSocket);
+                    receberArquivo(clientSocket);
                 break;
                 default:
-                cout << "Até mais" << endl;
+                    cout << "Até mais" << endl;
                 goto endwhile;
             }
 

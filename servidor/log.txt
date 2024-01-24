@@ -1,0 +1,4 @@
+Servidor Criado com sucesso
+Socket vinculado com sucesso
+Servidor em modo listen
+Cliente Conectado

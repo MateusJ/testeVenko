@@ -1,0 +1,2 @@
+Socket criado com sucesso
+Conectado ao servidor

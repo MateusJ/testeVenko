@@ -27,8 +27,6 @@ string receberMsg(int clientSocket) {
 void enviarMsg(int clientSocket, const char* mensagem) {
     if (send(clientSocket, mensagem, strlen(mensagem), 0) == -1) {
         cerr << "Erro ao enviar dados para o servidor." << endl;
-    } else {
-        cout << "Dados enviados para o servidor." << endl;
     }
 }
 
@@ -36,8 +34,6 @@ void enviarPedido(int clientSocket, Pedido pedido){
 
     if (send(clientSocket, &pedido, sizeof(Pedido), 0) == -1) {
         cerr << "Erro ao enviar dados para o servidor." << endl;
-    } else {
-        cout << "Dados enviados para o servidor." << endl;
     }
 
 }
@@ -102,16 +98,43 @@ void enviarArquivo(int clientSocket, Pedido pedido){
     receberMsg(clientSocket);
 }
 
+void escreverLog(string mensagem){
+
+    ofstream log("log.txt", ios::app);
+
+    if(!log.is_open()){
+        cerr << "Erro ao criar arquivo" << endl;
+        return;
+    }
+
+    int bytes;
+
+    log << mensagem;
+
+}
+
+void checarLog(){
+
+    FILE *log;
+    if(log = fopen("log.txt", "r")){
+        remove("log.txt");
+    }
+
+}
+
 int main() {
     const int port = 8080;
     const string ip = "127.0.0.1";
     int escolhaOpcao = 0;
     string arquivoEscolhido = "", escolherAuxiliar = "";
+    checarLog();
 
     int clientSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (clientSocket == -1) {
-        cerr << "Erro ao criar o socket do cliente." << endl;
+        escreverLog("Erro ao criar socket\n");
         return -1;
+    }else{
+        escreverLog("Socket criado com sucesso\n");
     }
 
     sockaddr_in serverAddr;
@@ -120,9 +143,11 @@ int main() {
     serverAddr.sin_addr.s_addr = inet_addr(ip.c_str());
 
     if (connect(clientSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == -1) {
-        cerr << "Erro ao conectar ao servidor." << endl;
+        escreverLog("Erro ao conectar com servidor\n");
         close(clientSocket);
         return -1;
+    }else{
+        escreverLog("Conectado ao servidor\n");
     }
 
     
