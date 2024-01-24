@@ -8,12 +8,12 @@ Este é um exemplo básico de uma aplicação cliente-servidor em c++.
 
 ## Compilação
 
-###Entre na pasta Servidor e digite:
+**Entre na pasta Servidor e digite:**
 ```bash
 g++ servidor.cpp -o servidor -std=c++11
 ```
 
-###Entre na pasta Cliente e digite:
+**Entre na pasta Cliente e digite:**
 ```bash
 g++ cliente.cpp -o cliente -std=c++11
 ```
@@ -21,12 +21,12 @@ g++ cliente.cpp -o cliente -std=c++11
 ## Execução
 Execute primeiro o servidor.
 
-###Entre na pasta Servidor e digite:
+**Entre na pasta Servidor e digite:**
 ```bash
 ./servidor
 ```
 
-###Entre na pasta cliente e digite:
+**Entre na pasta cliente e digite:**
 ```bash
 ./cliente
 ```
