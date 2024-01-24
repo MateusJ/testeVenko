@@ -7,11 +7,6 @@
 
 using namespace std;
 
-struct Arquivo{
-    char nome[50];
-    
-};
-
 struct Pedido{
     char nome[50];
     int funcao;
@@ -52,8 +47,6 @@ void receberArquivo(int clientSocket){
     Pedido download;
 
     recv(clientSocket, &download, sizeof(Pedido),0);
-    cout << download.nome << endl;
-    cout << download.tamanho << endl;
     enviarMsg(clientSocket, "OK");
 
     string caminho = "./downloads/" + string(download.nome);
@@ -106,7 +99,7 @@ void enviarArquivo(int clientSocket, Pedido pedido){
         send(clientSocket,buffer,arquivo.gcount(),0);
     }
     arquivo.close();
-
+    receberMsg(clientSocket);
 }
 
 int main() {
@@ -132,15 +125,16 @@ int main() {
         return -1;
     }
 
-    enviarMsg(clientSocket, "Hello teste!");
+    
 
     while (true) {
 
-        enviarMsg(clientSocket, "ok");
+        enviarMsg(clientSocket, "Hello teste!");
+        receberMsg(clientSocket);
 
         Pedido pedido;
 
-        cout << "Opções:\n1. Listagem de arquivos\n2. Download de arquivo\n3. Deletar arquivo\n4. Upload de arquivos\n" << endl;
+        cout << "\nOpções:\n1. Listagem de arquivos\n2. Download de arquivo\n3. Deletar arquivo\n4. Upload de arquivos\n" << endl;
         cout << "Escolha uma opção: ";
         cin >> escolhaOpcao;
         pedido.funcao = escolhaOpcao;

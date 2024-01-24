@@ -9,11 +9,6 @@
 
 using namespace std;
 
-struct Arquivo{
-    char nome[50];
-    
-};
-
 struct Pedido{
     char nome[50];
     int funcao;
@@ -69,9 +64,9 @@ void enviarMsg(int clientSocket, const char* mensagem){
 
     if (send(clientSocket, mensagem, strlen(mensagem), 0) == -1) {
         cerr << "Erro ao enviar dados para o servidor." << endl;
-    } else {
+    }/**else {
         cout << "Dados enviados para o servidor." << endl;
-    }
+    }**/
 
 }
 
@@ -80,7 +75,6 @@ void enviarArquivo(int clientSocket, const char* arquivoEscolhido){
     Pedido download;
 
     string novoArquivo = "./arquivos/" + string(arquivoEscolhido);
-    cout << novoArquivo << endl;
 
     ifstream arquivo(novoArquivo, ios::binary | ios::ate);
 
@@ -94,9 +88,6 @@ void enviarArquivo(int clientSocket, const char* arquivoEscolhido){
 
     strcpy(download.nome, arquivoEscolhido);
     download.tamanho = tamanhoArquivo;
-
-    cout << download.nome << endl;
-    cout << download.tamanho << endl;
 
     send(clientSocket, &download, sizeof(Pedido),0);
 
@@ -113,11 +104,9 @@ void enviarArquivo(int clientSocket, const char* arquivoEscolhido){
 
 void deleteArquivo(const char* arquivoEscolhido){
 
-    cout << arquivoEscolhido << endl;
 
     string deletarArquivo = "./arquivos/" + string(arquivoEscolhido);
 
-    cout << deletarArquivo << endl;
 
     if(remove(deletarArquivo.c_str()) != 0){
         cerr << "Problemas ao remover arquivo" << endl;
@@ -156,6 +145,7 @@ void receberArquivo(int clientSocket){
         bytes += recebido;
     }
     arquivo.close();
+    enviarMsg(clientSocket, "OK");  
     
 }
 
@@ -210,17 +200,15 @@ int main() {
 
     // Lê dados do cliente
     
-        cout << receberMsg(clientSocket) << endl;
+        
 
         while(true){
 
             Pedido pedido;
-            receberMsg(clientSocket);            
+            cout << receberMsg(clientSocket) << endl;
+            enviarMsg(clientSocket, "OK");            
 
             pedido = receberPedido(clientSocket);
-            
-            cout << pedido.funcao << endl;
-            cout << pedido.nome << endl;
 
             switch(pedido.funcao){
                 case 1:
@@ -231,7 +219,6 @@ int main() {
                 enviarArquivo(clientSocket, pedido.nome);
                 break;
                 case 3:
-                cout << pedido.nome << endl;
                 deleteArquivo(pedido.nome);
                 break;
                 case 4:
